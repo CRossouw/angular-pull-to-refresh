@@ -1,6 +1,6 @@
 /**
  * angular-pull-to-refresh
- * @version v0.3.0 - 2015-11-26
+ * @version v0.3.1 - 2016-10-06
  * @link https://github.com/mgcrea/angular-pull-to-refresh
  * @author Olivier Louvignes <olivier@mg-crea.com>
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -12,9 +12,9 @@
     treshold: 60,
     debounce: 400,
     text: {
-      pull: 'pull to refresh',
-      release: 'release to refresh',
-      loading: 'refreshing...'
+      pull: 'Pull to Refresh',
+      release: 'Release to Refresh',
+      loading: 'Loading...'
     },
     icon: {
       pull: 'fa fa-arrow-down',
@@ -89,21 +89,28 @@
                 'transform': translateFn
               };
             }
-            function getTouch(evt) {
+            function getDrag(evt) {
               var event = evt;
               if (event.originalEvent) {
                 event = event.originalEvent;
               }
-              return event.touches[0];
+              return event.touches && event.touches.length > 0 ? event.touches[0] : event;
             }
             var isUsingOverflowScroll = true;
             var startY;
-            iElement.bind('touchstart', function (ev) {
-              startY = getTouch(ev).pageY;
+            var isTracking = false;
+            iElement.bind('touchstart mousedown', function (ev) {
+              startY = getDrag(ev).pageY;
+              isTracking = true;
+              ev.preventDefault();
             });
-            iElement.bind('touchmove', function (ev) {
+            iElement.bind('touchmove mousemove', function (ev) {
+              if (!isTracking) {
+                return;
+              }
+              ev.preventDefault();
               var top = scrollElement[0].scrollTop;
-              var currentY = getTouch(ev).pageY;
+              var currentY = getDrag(ev).pageY;
               if (top === 0) {
                 isUsingOverflowScroll = false;
                 top = startY - currentY;
@@ -115,9 +122,11 @@
                 setStatus('pull');
               }
             });
-            iElement.bind('touchend', function (ev) {
-              if (!shouldReload)
+            iElement.bind('touchend mouseup', function (ev) {
+              isTracking = false;
+              if (!shouldReload) {
                 return;
+              }
               iElement.css(getTransformStyle(0));
               ptrElement.style.webkitTransitionDuration = 0;
               ptrElement.style.margin = '0 auto';
@@ -133,6 +142,7 @@
               });
             });
             scope.$on('$destroy', function () {
+              iElement.unbind('touchstart');
               iElement.unbind('touchmove');
               iElement.unbind('touchend');
             });
@@ -145,7 +155,7 @@
   angular.module('mgcrea.pullToRefresh').run([
     '$templateCache',
     function ($templateCache) {
-      $templateCache.put('angular-pull-to-refresh.tpl.html', '<div class="pull-to-refresh">\n' + '  <i ng-class="icon[status]"></i>&nbsp;\n' + '  <span ng-bind="text[status]"></span>\n' + '</div>\n' + '<div ng-transclude></div>\n');
+      $templateCache.put('angular-pull-to-refresh.tpl.html', '<div class="pull-to-refresh">\r' + '\n' + '  <i ng-class="icon[status]"></i>&nbsp;\r' + '\n' + '  <span ng-bind="text[status]"></span>\r' + '\n' + '</div>\r' + '\n' + '<div ng-transclude></div>\r' + '\n');
     }
   ]);
 }(window, document));
